@@ -1,0 +1,24 @@
+{
+  "name": "superdrumputer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattybrad/superdrumputer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mattybrad/superdrumputer/issues"
+  },
+  "homepage": "https://github.com/mattybrad/superdrumputer#readme",
+  "dependencies": {
+    "react": "^15.1.0",
+    "react-dom": "^15.1.0"
+  },
+  "devDependencies": {}
+}
