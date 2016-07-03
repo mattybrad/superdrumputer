@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { render } from 'react-dom'
 import { generateHits } from './HitMaker'
+import { FreqBand } from './FreqBand'
 
 var actx
 
@@ -8,6 +9,10 @@ class Example extends Component {
   componentDidMount() {
     actx = new AudioContext()
     var hits = generateHits()
+    var bands = []
+    for (var i = 0; i < 5; i ++) {
+      bands.push(new FreqBand())
+    }
     for (var i = 0; i < hits.length; i ++) {
       this.scheduleHit(hits[i])
     }
