@@ -2,14 +2,14 @@
 // just playing around here for now
 
 var settings = {
-  numChannels: 5,
-  bottomFreq: 100,
-  topFreq: 800,
+  numChannels: 10,
+  bottomFreq: 50,
+  topFreq: 500,
   releaseTime: 0.5
 }
 
 var a = new AudioContext()
-var bufferSize = 100000 // tweak this?
+var bufferSize = 1000000 // tweak this?
 var noiseBuffer = a.createBuffer(1, bufferSize, a.sampleRate)
 var noiseData = noiseBuffer.getChannelData(0)
 for (var i = 0; i < bufferSize; i++) {
@@ -61,7 +61,7 @@ function createChannel(freq) {
 
   var gain = a.createGain()
   gain.gain.value = 0
-  gain.gain.value = Math.min(1, 1/(freq/100)) / settings.numChannels
+  gain.gain.value = Math.min(1, 1/(freq/100))
 
   filter.connect(gain)
 
@@ -74,31 +74,31 @@ function createChannel(freq) {
 var scheduledTo = 0
 var schedulePeriod = 1
 var timeoutPeriod = 0.5
-var notesPerSecond = 20
+var notesPerSecond = 30
+var noteLength = 0.1
 function scheduleNotes() {
   var thisSchedulePeriod = schedulePeriod - (scheduledTo - a.currentTime)
   var totalNotes = notesPerSecond * thisSchedulePeriod
   for(var i = 0; i < totalNotes; i++) {
-    scheduleNote(scheduledTo + Math.random() * thisSchedulePeriod, Math.floor(Math.random() * settings.numChannels))
+    scheduleNote(scheduledTo + Math.random() * thisSchedulePeriod, noteLength, Math.floor(Math.random() * settings.numChannels))
   }
   scheduledTo = a.currentTime + schedulePeriod
   setTimeout(scheduleNotes, timeoutPeriod * 1000)
 }
 
-function scheduleNote(t, channel) {
-  console.log(t)
+function scheduleNote(t, l, channel) {
   var node = a.createBufferSource()
   node.buffer = noiseBuffer
 
   var gain = a.createGain()
   gain.gain.value = 0
-  gain.gain.setValueAtTime(Math.random(), t)
-  gain.gain.exponentialRampToValueAtTime(0.00001, t + 5)
+  gain.gain.setValueAtTime(Math.random() * Math.random(), t)
+  gain.gain.linearRampToValueAtTime(0.00001, t + l)
 
   node.connect(gain)
   gain.connect(channels[channel].input)
 
-  node.start(t)
+  node.start(t, Math.random() * 5)
 }
 
 scheduleNotes()
