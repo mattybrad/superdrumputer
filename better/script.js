@@ -107,5 +107,26 @@ scheduleNotes()
 
 var cvs = document.getElementById('beatCanvas')
 var ctx = cvs.getContext('2d')
-ctx.fillStyle = "#ffffff"
-ctx.fillRect(0,0,50,50)
+
+var mouseIsDown = false
+cvs.addEventListener("mousedown", function(ev) {
+  mouseIsDown = true
+})
+cvs.addEventListener("mouseup", function(ev) {
+  mouseIsDown = false
+})
+cvs.addEventListener("mousemove", function(ev) {
+  if(mouseIsDown) {
+    var radius = 60
+    var x = ev.pageX - cvs.offsetLeft
+    var y = ev.pageY - cvs.offsetTop
+    var grad = ctx.createRadialGradient(x, y, 0, x, y, radius)
+    grad.addColorStop(0, "rgba(255,255,255,0.04)")
+    grad.addColorStop(0.05, "rgba(255,255,255,0.02)")
+    grad.addColorStop(1, "rgba(255,255,255,0)")
+    ctx.fillStyle = grad
+    ctx.beginPath()
+    ctx.arc(x, y, radius, 0, 2 * Math.PI)
+    ctx.fill()
+  }
+})
