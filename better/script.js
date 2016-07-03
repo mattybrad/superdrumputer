@@ -102,3 +102,10 @@ function scheduleNote(t, l, channel) {
 }
 
 scheduleNotes()
+
+// canvas stuff. crikey this is getting messy
+
+var cvs = document.getElementById('beatCanvas')
+var ctx = cvs.getContext('2d')
+ctx.fillStyle = "#ffffff"
+ctx.fillRect(0,0,50,50)
