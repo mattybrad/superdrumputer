@@ -107,6 +107,8 @@ scheduleNotes()
 
 var cvs = document.getElementById('beatCanvas')
 var ctx = cvs.getContext('2d')
+ctx.fillStyle = 0x000000
+ctx.fillRect(0, 0, cvs.width, cvs.height)
 var mousePos = {x:0,y:0}
 var mouseIsDown = false
 cvs.addEventListener("mousedown", function(ev) {
@@ -134,3 +136,27 @@ setInterval(function() {
     ctx.fill()
   }
 }, 5)
+
+function getBandCurvesFromCanvas() {
+  var y
+  var blockWidth = 10
+  var blockHeight
+  var imgData
+  var channelArrays = []
+  var thisIntensity
+  for(var i = 0; i < settings.numChannels; i ++) {
+    channelArrays[i] = []
+    y = Math.floor(i * cvs.height / settings.numChannels)
+    blockHeight = Math.floor(cvs.height / settings.numChannels)
+    for(var j = 0; j < cvs.width; j += blockWidth) {
+      imgData = ctx.getImageData(j, y, blockWidth, blockHeight)
+      thisIntensity = 0
+      for(var k = 0; k < imgData.data.length; k+=4) {
+        thisIntensity += imgData.data[k]
+      }
+      thisIntensity /= 255 * imgData.data.length / 4
+      channelArrays[i][j] = thisIntensity
+    }
+  }
+  return channelArrays
+}
