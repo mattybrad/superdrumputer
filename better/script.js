@@ -107,7 +107,7 @@ scheduleNotes()
 
 var cvs = document.getElementById('beatCanvas')
 var ctx = cvs.getContext('2d')
-
+var mousePos = {x:0,y:0}
 var mouseIsDown = false
 cvs.addEventListener("mousedown", function(ev) {
   mouseIsDown = true
@@ -116,10 +116,14 @@ cvs.addEventListener("mouseup", function(ev) {
   mouseIsDown = false
 })
 cvs.addEventListener("mousemove", function(ev) {
+  mousePos.x = ev.pageX - cvs.offsetLeft
+  mousePos.y = ev.pageY - cvs.offsetTop
+})
+setInterval(function() {
   if(mouseIsDown) {
     var radius = 60
-    var x = ev.pageX - cvs.offsetLeft
-    var y = ev.pageY - cvs.offsetTop
+    var x = mousePos.x + 10 * (1 - 2*Math.random())
+    var y = mousePos.y + 10 * (1 - 2*Math.random())
     var grad = ctx.createRadialGradient(x, y, 0, x, y, radius)
     grad.addColorStop(0, "rgba(255,255,255,0.04)")
     grad.addColorStop(0.05, "rgba(255,255,255,0.02)")
@@ -129,4 +133,4 @@ cvs.addEventListener("mousemove", function(ev) {
     ctx.arc(x, y, radius, 0, 2 * Math.PI)
     ctx.fill()
   }
-})
+}, 5)
