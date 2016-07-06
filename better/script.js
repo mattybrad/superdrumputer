@@ -2,7 +2,7 @@
 // just playing around here for now
 
 var settings = {
-  numChannels: 10,
+  numChannels: 3,
   bottomFreq: 50,
   topFreq: 500,
   releaseTime: 0.5
@@ -16,38 +16,6 @@ for (var i = 0; i < bufferSize; i++) {
   noiseData[i] = Math.random()
 }
 
-function createNoiseNode(freq) {
-
-  var bufferSize = 10000 // is this too big?
-  var node = a.createBufferSource()
-  var buffer = a.createBuffer(1, bufferSize, a.sampleRate)
-  var data = buffer.getChannelData(0)
-
-  for (var i = 0; i < bufferSize; i++) {
-    data[i] = Math.random()
-  }
-
-  node.buffer = buffer
-  node.loop = true
-  node.start()
-
-  var filter = a.createBiquadFilter()
-  filter.type = "bandpass"
-  filter.frequency.value = freq
-  node.connect(filter)
-
-  var gain = a.createGain()
-  gain.gain.value = 0
-  //gain.gain.value = Math.min(1, 1/(freq/100)) / settings.numChannels
-
-  //gain.gain.setValueAtTime(gain.gain.value, a.currentTime + 2)
-  //gain.gain.exponentialRampToValueAtTime(0.00001, a.currentTime + 5)
-
-  filter.connect(gain)
-
-  return gain
-}
-
 var channels = []
 for (var i = 0; i < settings.numChannels; i ++) {
   channels[i] = createChannel(settings.bottomFreq + i * (settings.topFreq - settings.bottomFreq) / (settings.numChannels - 1))
@@ -59,15 +27,19 @@ function createChannel(freq) {
   filter.type = "bandpass"
   filter.frequency.value = freq
 
-  var gain = a.createGain()
-  gain.gain.value = 0
-  gain.gain.value = Math.min(1, 1/(freq/100))
+  var gain1 = a.createGain()
+  gain1.gain.value = Math.min(1, 1/(freq/100))
 
-  filter.connect(gain)
+  var gain2 = a.createGain()
+  gain2.gain.value = 0
+  gain2.gain.setValueAtTime(0, 0)
+
+  filter.connect(gain1)
+  gain1.connect(gain2)
 
   return {
     input: filter,
-    output: gain
+    output: gain2
   }
 }
 
@@ -91,7 +63,7 @@ cvs.addEventListener("mousemove", function(ev) {
 })
 setInterval(function() {
   if(mouseIsDown) {
-    var radius = 60
+    var radius = 30
     var x = mousePos.x + 10 * (1 - 2*Math.random())
     var y = mousePos.y + 10 * (1 - 2*Math.random())
     var grad = ctx.createRadialGradient(x, y, 0, x, y, radius)
@@ -108,7 +80,7 @@ setInterval(function() {
 var scheduledTo = 0
 var schedulePeriod = 1
 var timeoutPeriod = 0.5
-var notesPerSecond = 30
+var notesPerSecond = 50
 var noteLength = 0.1
 var barPos = 0
 var barLength = 2
@@ -133,8 +105,9 @@ function scheduleNote(t, l, channel) {
 
   var gain = a.createGain()
   gain.gain.value = 0
-  gain.gain.setValueAtTime(Math.random() * Math.random(), t)
-  gain.gain.linearRampToValueAtTime(0.00001, t + l)
+  gain.gain.setValueAtTime(1, t)
+  //gain.gain.linearRampToValueAtTime(0.00001, t + l)
+  gain.gain.setValueAtTime(0, t+0.05)
 
   node.connect(gain)
   gain.connect(channels[channel].input)
@@ -143,10 +116,16 @@ function scheduleNote(t, l, channel) {
 }
 
 function scheduleRamps(startPoint, endPoint) {
+  var p
+  var t
   for(var i = 0; i < channels.length; i ++) {
-
+    p = getRampPointsFromCanvas(i, startPoint, endPoint)
+    for(var j = 0; j < p.length; j ++) {
+      t = (p[j].pos + (p[j].pos < barPos ? 1 : 0)) * barLength + a.currentTime
+      channels[i].output.gain.linearRampToValueAtTime(Math.round(p[j].vol), t)
+      //if(i == 0) console.log(t, p[j].vol)
+    }
   }
-  getRampPointsFromCanvas(0, startPoint, endPoint) // temp
 }
 
 scheduleNotes()
@@ -184,17 +163,17 @@ function getRampPointsFromCanvas(channel, startPoint, endPoint) {
   var points = []
   var startX = blockWidth * Math.ceil(startPoint * cvs.width / blockWidth)
   var endX = blockWidth * Math.floor(endPoint * cvs.width / blockWidth)
-  for(var i = startX; i <= endX; i += blockWidth) {
+  for(var i = startX; i <= endX && i < cvs.width; i += blockWidth) {
     imgData = ctx.getImageData(i, y, blockWidth, blockHeight)
     thisIntensity = 0
     for(var k = 0; k < imgData.data.length; k+=4) {
       thisIntensity += imgData.data[k]
     }
     thisIntensity /= 255 * imgData.data.length / 4
-    points[i] = {
+    points.push({
       pos: i / cvs.width,
       vol: thisIntensity
-    }
+    })
   }
-  console.log(points)
+  return points
 }
