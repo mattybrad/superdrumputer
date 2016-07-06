@@ -71,38 +71,6 @@ function createChannel(freq) {
   }
 }
 
-var scheduledTo = 0
-var schedulePeriod = 1
-var timeoutPeriod = 0.5
-var notesPerSecond = 30
-var noteLength = 0.1
-function scheduleNotes() {
-  var thisSchedulePeriod = schedulePeriod - (scheduledTo - a.currentTime)
-  var totalNotes = notesPerSecond * thisSchedulePeriod
-  for(var i = 0; i < totalNotes; i++) {
-    scheduleNote(scheduledTo + Math.random() * thisSchedulePeriod, noteLength, Math.floor(Math.random() * settings.numChannels))
-  }
-  scheduledTo = a.currentTime + schedulePeriod
-  setTimeout(scheduleNotes, timeoutPeriod * 1000)
-}
-
-function scheduleNote(t, l, channel) {
-  var node = a.createBufferSource()
-  node.buffer = noiseBuffer
-
-  var gain = a.createGain()
-  gain.gain.value = 0
-  gain.gain.setValueAtTime(Math.random() * Math.random(), t)
-  gain.gain.linearRampToValueAtTime(0.00001, t + l)
-
-  node.connect(gain)
-  gain.connect(channels[channel].input)
-
-  node.start(t, Math.random() * 5)
-}
-
-scheduleNotes()
-
 // canvas stuff. crikey this is getting messy
 
 var cvs = document.getElementById('beatCanvas')
@@ -137,6 +105,52 @@ setInterval(function() {
   }
 }, 5)
 
+var scheduledTo = 0
+var schedulePeriod = 1
+var timeoutPeriod = 0.5
+var notesPerSecond = 30
+var noteLength = 0.1
+var barPos = 0
+var barLength = 2
+var lastAudioTime = 0
+function scheduleNotes() {
+  barPos += (a.currentTime - lastAudioTime) / barLength
+  barPos = barPos % 1
+  var thisSchedulePeriod = schedulePeriod - (scheduledTo - a.currentTime)
+  var totalNotes = notesPerSecond * thisSchedulePeriod
+  for(var i = 0; i < totalNotes; i++) {
+    scheduleNote(scheduledTo + Math.random() * thisSchedulePeriod, noteLength, Math.floor(Math.random() * settings.numChannels))
+  }
+  scheduleRamps(barPos, barPos + thisSchedulePeriod / barLength)
+  scheduledTo = a.currentTime + schedulePeriod
+  lastAudioTime = a.currentTime
+  setTimeout(scheduleNotes, timeoutPeriod * 1000)
+}
+
+function scheduleNote(t, l, channel) {
+  var node = a.createBufferSource()
+  node.buffer = noiseBuffer
+
+  var gain = a.createGain()
+  gain.gain.value = 0
+  gain.gain.setValueAtTime(Math.random() * Math.random(), t)
+  gain.gain.linearRampToValueAtTime(0.00001, t + l)
+
+  node.connect(gain)
+  gain.connect(channels[channel].input)
+
+  node.start(t, Math.random() * 5)
+}
+
+function scheduleRamps(startPoint, endPoint) {
+  for(var i = 0; i < channels.length; i ++) {
+
+  }
+  getRampPointsFromCanvas(0, startPoint, endPoint) // temp
+}
+
+scheduleNotes()
+
 function getBandCurvesFromCanvas() {
   var y
   var blockWidth = 10
@@ -159,4 +173,28 @@ function getBandCurvesFromCanvas() {
     }
   }
   return channelArrays
+}
+
+function getRampPointsFromCanvas(channel, startPoint, endPoint) {
+  var blockWidth = 10
+  var blockHeight = Math.floor(cvs.height / settings.numChannels)
+  var y = Math.floor(channel * cvs.height / settings.numChannels)
+  var imgData
+  var thisIntensity
+  var points = []
+  var startX = blockWidth * Math.ceil(startPoint * cvs.width / blockWidth)
+  var endX = blockWidth * Math.floor(endPoint * cvs.width / blockWidth)
+  for(var i = startX; i <= endX; i += blockWidth) {
+    imgData = ctx.getImageData(i, y, blockWidth, blockHeight)
+    thisIntensity = 0
+    for(var k = 0; k < imgData.data.length; k+=4) {
+      thisIntensity += imgData.data[k]
+    }
+    thisIntensity /= 255 * imgData.data.length / 4
+    points[i] = {
+      pos: i / cvs.width,
+      vol: thisIntensity
+    }
+  }
+  console.log(points)
 }
